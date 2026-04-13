@@ -1,28 +1,36 @@
-# =========================
-# IMPORTAÇÕES
-# =========================
-
 import streamlit as st
 from supabase import create_client
 import pandas as pd
 
-
 # =========================
-# CONEXÃO COM O BANCO
+# CONEXÃO COM SUPABASE
 # =========================
 
-# Credenciais do Supabase via secrets
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 
 supabase = create_client(url, key)
 
+st.set_page_config(page_title="Votação de Desafios", layout="centered")
 
 # =========================
-# FUNÇÕES CRUD (CAMADA DE DADOS)
+# CONTROLE DE PÁGINAS
 # =========================
 
-# CREATE - Inserir voto
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = 'lista'
+
+if 'voto_id' not in st.session_state:
+    st.session_state.voto_id = None
+
+def ir(pagina):
+    st.session_state.pagina = pagina
+    st.rerun()
+
+# =========================
+# FUNÇÕES CRUD
+# =========================
+
 def inserir_voto(usuario, desafio, voto):
     return supabase.table("votos").insert({
         "usuario": usuario,
@@ -30,75 +38,19 @@ def inserir_voto(usuario, desafio, voto):
         "voto": voto
     }).execute()
 
+def listar_votos():
+    return supabase.table("votos").select("*").execute()
 
-# READ - Buscar votos por desafio
-def buscar_votos(desafio):
-    return supabase.table("votos") \
-        .select("*") \
-        .eq("desafio", desafio) \
-        .execute()
+def buscar_voto_por_id(id):
+    return supabase.table("votos").select("*").eq("id", id).execute()
 
+def atualizar_voto(id, novo_voto):
+    return supabase.table("votos").update({
+        "voto": novo_voto
+    }).eq("id", id).execute()
 
-# READ - Verificar se usuário já votou
-def verificar_voto(usuario, desafio):
-    return supabase.table("votos") \
-        .select("*") \
-        .eq("usuario", usuario) \
-        .eq("desafio", desafio) \
-        .execute()
-
-
-# UPDATE - Atualizar voto (preparado para integração futura)
-def atualizar_voto(usuario, desafio, novo_voto):
-    return supabase.table("votos") \
-        .update({"voto": novo_voto}) \
-        .eq("usuario", usuario) \
-        .eq("desafio", desafio) \
-        .execute()
-
-
-# DELETE - Remover voto (admin ou testes)
-def deletar_voto(usuario, desafio):
-    return supabase.table("votos") \
-        .delete() \
-        .eq("usuario", usuario) \
-        .eq("desafio", desafio) \
-        .execute()
-
-
-# =========================
-# CONFIGURAÇÃO DA PÁGINA
-# =========================
-
-st.set_page_config(page_title="Sistema de Votação", layout="centered")
-
-
-# =========================
-# DADOS SIMULADOS (INTEGRAÇÃO FUTURA)
-# =========================
-
-# Aqui futuramente virá do sistema de login
-if "usuario" not in st.session_state:
-    st.session_state.usuario = "AlunoTeste"
-
-# Aqui futuramente virá do sistema de desafios
-if "desafio" not in st.session_state:
-    st.session_state.desafio = "Desafio 01"
-
-
-# =========================
-# NAVEGAÇÃO
-# =========================
-
-if "pagina" not in st.session_state:
-    st.session_state.pagina = "lista"
-
-def ir_para_votacao():
-    st.session_state.pagina = "votacao"
-
-def ir_para_lista():
-    st.session_state.pagina = "lista"
-
+def deletar_voto(id):
+    return supabase.table("votos").delete().eq("id", id).execute()
 
 # =========================
 # HEADER
@@ -106,96 +58,113 @@ def ir_para_lista():
 
 col1, col2 = st.columns([4, 1])
 with col2:
-    st.write(f"Usuário: {st.session_state.usuario}")
+    st.markdown("👤 *Aluno*")
 
 st.divider()
 
-
 # =========================
-# PÁGINA DE LISTA DE DESAFIOS
-# =========================
-
-if st.session_state.pagina == "lista":
-
-    # Simulação de desafios (depois vem do outro grupo)
-    desafios = ["Desafio 01"]
-
-    for d in desafios:
-        with st.container(border=True):
-            st.write(f"### {d}")
-            st.caption("em andamento")
-
-            if st.button(f"Acessar {d}"):
-                st.session_state.desafio = d
-                ir_para_votacao()
-                st.rerun()
-
-
-# =========================
-# PÁGINA DE VOTAÇÃO
+# PÁGINA LISTA DE DESAFIOS
 # =========================
 
-elif st.session_state.pagina == "votacao":
+if st.session_state.pagina == 'lista':
 
-    if st.button("Voltar"):
-        ir_para_lista()
-        st.rerun()
+    with st.container(border=True):
+        st.write("### Desafio 01 - A Realidade vs. A Teoria")
+        st.caption("em andamento")
+
+        if st.button("Acessar Desafio"):
+            ir('votacao')
 
     st.divider()
 
-    desafio = st.session_state.desafio
-    usuario = st.session_state.usuario
+    if st.button("Ver votos cadastrados"):
+        ir('visualizar')
 
-    st.write(f"### {desafio} | Votação")
+# =========================
+# PÁGINA VOTAÇÃO (CREATE)
+# =========================
 
-    # Área de voto (melhorado com radio)
-    voto = st.radio(
-        "Escolha sua nota:",
-        ["Bom", "Regular", "Ruim"]
-    )
+elif st.session_state.pagina == 'votacao':
 
-    # Botão de envio
+    if st.button("← Voltar"):
+        ir('lista')
+
+    st.write("### Votação")
+
+    voto = st.radio("Escolha sua nota:", ["Bom", "Regular", "Ruim"])
+
     if st.button("Enviar Voto"):
-
         try:
-            existente = verificar_voto(usuario, desafio)
-
-            if existente.data:
-                st.warning("Você já votou. Atualizando voto...")
-
-                atualizar_voto(usuario, desafio, voto)
-                st.success("Voto atualizado com sucesso.")
-
-            else:
-                inserir_voto(usuario, desafio, voto)
-                st.success("Voto registrado com sucesso.")
-
+            inserir_voto("AlunoTeste", "Desafio 01", voto)
+            st.success("Voto salvo com sucesso")
         except Exception as e:
-            st.error(f"Erro: {e}")
+            st.error(e)
 
+# =========================
+# PÁGINA VISUALIZAR (READ)
+# =========================
 
-    # =========================
-    # RESULTADOS
-    # =========================
+elif st.session_state.pagina == 'visualizar':
 
-    st.divider()
-    st.write("### Resultados")
+    if st.button("← Voltar"):
+        ir('lista')
 
-    try:
-        dados = buscar_votos(desafio)
+    st.write("### Votos cadastrados")
 
-        if dados.data:
-            df = pd.DataFrame(dados.data)
+    dados = listar_votos()
 
-            # Mostra tabela
-            st.write(df)
+    if dados.data:
+        df = pd.DataFrame(dados.data)
+        st.write(df)
 
-            # Gráfico
-            contagem = df["voto"].value_counts()
-            st.bar_chart(contagem)
+        st.divider()
+        st.write("Selecione um voto pelo ID")
 
-        else:
-            st.info("Nenhum voto registrado.")
+        id_voto = st.number_input("ID", step=1)
 
-    except Exception as e:
-        st.error(f"Erro ao buscar dados: {e}")
+        if st.button("Editar / Excluir"):
+            st.session_state.voto_id = id_voto
+            ir('editar')
+
+    else:
+        st.info("Nenhum voto encontrado")
+
+# =========================
+# PÁGINA EDITAR (UPDATE / DELETE)
+# =========================
+
+elif st.session_state.pagina == 'editar':
+
+    if st.button("← Voltar"):
+        ir('visualizar')
+
+    id_voto = st.session_state.voto_id
+
+    st.write(f"### Editar voto ID {id_voto}")
+
+    dados = buscar_voto_por_id(id_voto)
+
+    if dados.data:
+
+        voto_atual = dados.data[0]["voto"]
+
+        novo_voto = st.radio(
+            "Novo voto:",
+            ["Bom", "Regular", "Ruim"],
+            index=["Bom", "Regular", "Ruim"].index(voto_atual)
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Atualizar"):
+                atualizar_voto(id_voto, novo_voto)
+                st.success("Voto atualizado")
+
+        with col2:
+            if st.button("Excluir"):
+                deletar_voto(id_voto)
+                st.success("Voto excluído")
+
+    else:
+        st.error("Voto não encontrado")
