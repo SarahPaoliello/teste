@@ -44,6 +44,9 @@ def inserir_voto(usuario, desafio, voto):
 def listar_votos():
     return supabase.table("votos").select("*").execute()
 
+def buscar_votos_por_desafio(desafio):
+    return supabase.table("votos").select("*").eq("desafio", desafio).execute()
+
 def buscar_voto_por_id(id):
     return supabase.table("votos").select("*").eq("id", id).execute()
 
@@ -73,7 +76,6 @@ if st.session_state.pagina == 'lista':
 
     st.write("### Lista de Desafios")
 
-    # Simulação de múltiplos desafios
     desafios = [
         "Desafio 01 - A Realidade vs. A Teoria",
         "Desafio 02 - Testes Experimentais"
@@ -94,7 +96,7 @@ if st.session_state.pagina == 'lista':
         ir('visualizar')
 
 # =========================
-# VOTAÇÃO (CREATE)
+# VOTAÇÃO + GRÁFICO
 # =========================
 
 elif st.session_state.pagina == 'votacao':
@@ -113,15 +115,37 @@ elif st.session_state.pagina == 'votacao':
             inserir_voto("AlunoTeste", desafio, voto)
             st.success("Voto salvo com sucesso")
 
-            # volta automaticamente para lista
             st.session_state.desafio = None
             ir('lista')
 
         except Exception as e:
             st.error(e)
 
+    # =========================
+    # GRÁFICO DE VOTOS
+    # =========================
+
+    st.divider()
+    st.write("### Resultado do Desafio")
+
+    dados = buscar_votos_por_desafio(desafio)
+
+    if dados.data:
+        df = pd.DataFrame(dados.data)
+
+        # conta quantos votos existem de cada tipo
+        contagem = df["voto"].value_counts()
+
+        # garante que todas opções apareçam
+        contagem = contagem.reindex(["Bom", "Regular", "Ruim"], fill_value=0)
+
+        st.bar_chart(contagem)
+
+    else:
+        st.info("Nenhum voto ainda")
+
 # =========================
-# VISUALIZAR VOTOS (READ)
+# VISUALIZAR VOTOS
 # =========================
 
 elif st.session_state.pagina == 'visualizar':
@@ -149,7 +173,7 @@ elif st.session_state.pagina == 'visualizar':
         st.info("Nenhum voto encontrado")
 
 # =========================
-# EDITAR / EXCLUIR (UPDATE / DELETE)
+# EDITAR / EXCLUIR
 # =========================
 
 elif st.session_state.pagina == 'editar':
