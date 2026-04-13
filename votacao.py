@@ -14,7 +14,7 @@ supabase = create_client(url, key)
 st.set_page_config(page_title="Votação de Desafios", layout="centered")
 
 # =========================
-# CONTROLE DE PÁGINAS
+# CONTROLE DE ESTADO
 # =========================
 
 if 'pagina' not in st.session_state:
@@ -22,6 +22,9 @@ if 'pagina' not in st.session_state:
 
 if 'voto_id' not in st.session_state:
     st.session_state.voto_id = None
+
+if 'desafio' not in st.session_state:
+    st.session_state.desafio = None
 
 def ir(pagina):
     st.session_state.pagina = pagina
@@ -63,17 +66,27 @@ with col2:
 st.divider()
 
 # =========================
-# PÁGINA LISTA DE DESAFIOS
+# LISTA DE DESAFIOS
 # =========================
 
 if st.session_state.pagina == 'lista':
 
-    with st.container(border=True):
-        st.write("### Desafio 01 - A Realidade vs. A Teoria")
-        st.caption("em andamento")
+    st.write("### Lista de Desafios")
 
-        if st.button("Acessar Desafio"):
-            ir('votacao')
+    # Simulação de múltiplos desafios
+    desafios = [
+        "Desafio 01 - A Realidade vs. A Teoria",
+        "Desafio 02 - Testes Experimentais"
+    ]
+
+    for d in desafios:
+        with st.container(border=True):
+            st.write(f"### {d}")
+            st.caption("em andamento")
+
+            if st.button(f"Acessar {d}"):
+                st.session_state.desafio = d
+                ir('votacao')
 
     st.divider()
 
@@ -81,7 +94,7 @@ if st.session_state.pagina == 'lista':
         ir('visualizar')
 
 # =========================
-# PÁGINA VOTAÇÃO (CREATE)
+# VOTAÇÃO (CREATE)
 # =========================
 
 elif st.session_state.pagina == 'votacao':
@@ -89,19 +102,26 @@ elif st.session_state.pagina == 'votacao':
     if st.button("← Voltar"):
         ir('lista')
 
-    st.write("### Votação")
+    desafio = st.session_state.desafio
+
+    st.write(f"### {desafio} | Votação")
 
     voto = st.radio("Escolha sua nota:", ["Bom", "Regular", "Ruim"])
 
     if st.button("Enviar Voto"):
         try:
-            inserir_voto("AlunoTeste", "Desafio 01", voto)
+            inserir_voto("AlunoTeste", desafio, voto)
             st.success("Voto salvo com sucesso")
+
+            # volta automaticamente para lista
+            st.session_state.desafio = None
+            ir('lista')
+
         except Exception as e:
             st.error(e)
 
 # =========================
-# PÁGINA VISUALIZAR (READ)
+# VISUALIZAR VOTOS (READ)
 # =========================
 
 elif st.session_state.pagina == 'visualizar':
@@ -118,9 +138,8 @@ elif st.session_state.pagina == 'visualizar':
         st.write(df)
 
         st.divider()
-        st.write("Selecione um voto pelo ID")
 
-        id_voto = st.number_input("ID", step=1)
+        id_voto = st.number_input("Digite o ID do voto", step=1)
 
         if st.button("Editar / Excluir"):
             st.session_state.voto_id = id_voto
@@ -130,7 +149,7 @@ elif st.session_state.pagina == 'visualizar':
         st.info("Nenhum voto encontrado")
 
 # =========================
-# PÁGINA EDITAR (UPDATE / DELETE)
+# EDITAR / EXCLUIR (UPDATE / DELETE)
 # =========================
 
 elif st.session_state.pagina == 'editar':
@@ -140,13 +159,14 @@ elif st.session_state.pagina == 'editar':
 
     id_voto = st.session_state.voto_id
 
-    st.write(f"### Editar voto ID {id_voto}")
-
     dados = buscar_voto_por_id(id_voto)
 
     if dados.data:
 
         voto_atual = dados.data[0]["voto"]
+        desafio = dados.data[0]["desafio"]
+
+        st.write(f"### {desafio} | Editar voto ID {id_voto}")
 
         novo_voto = st.radio(
             "Novo voto:",
