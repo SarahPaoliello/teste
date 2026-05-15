@@ -1,60 +1,62 @@
-import streamlit as st
-
-from services.desafio_service import criar_desafio
+from database.conexao import supabase
 
 
-def tela_criar_desafio():
+def listar_desafios():
 
-    st.title("Criar desafio")
+    resposta = (
+        supabase
+        .table("desafios")
+        .select("*")
+        .order("id")
+        .execute()
+    )
 
-    with st.form("form_desafio"):
+    return resposta.data
 
-        titulo = st.text_input(
-            "Título"
-        )
 
-        descricao = st.text_area(
-            "Descrição"
-        )
+def criar_desafio(
+    titulo,
+    descricao,
+    max_participantes,
+    data_fechamento,
+    criador_id
+):
 
-        max_participantes = st.number_input(
-            "Máximo de participantes",
-            min_value=1,
-            step=1
-        )
+    dados = {
 
-        data_fechamento = st.date_input(
-            "Data de fechamento"
-        )
+        "titulo": titulo,
 
-        criar = st.form_submit_button(
-            "Criar desafio"
-        )
+        "descricao": descricao,
 
-    if criar:
+        "max_participantes": int(
+            max_participantes
+        ),
 
-        usuario = st.session_state.usuario_logado
+        "data_fechamento": data_fechamento.isoformat(),
 
-        criar_desafio(
-            titulo,
-            descricao,
-            max_participantes,
-            data_fechamento,
-            usuario["id"]
-        )
+        # ALTERADO PARA O NOME CORRETO DA TABELA
+        "criador_id": int(
+            criador_id
+        ),
 
-        st.success(
-            "Desafio criado com sucesso"
-        )
+        # STATUS PADRÃO
+        "status": "aberto"
+    }
 
-        st.session_state.pagina = "desafios"
+    return (
+        supabase
+        .table("desafios")
+        .insert(dados)
+        .execute()
+    )
 
-        st.rerun()
 
-    st.divider()
+def deletar_desafio(id_desafio):
 
-    if st.button("Voltar"):
-
-        st.session_state.pagina = "desafios"
-
-        st.rerun()
+    return (
+        supabase
+        .table("desafios")
+        .delete()
+        .eq("id", id_desafio)
+        .execute()
+    )
