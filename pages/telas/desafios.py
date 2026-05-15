@@ -10,11 +10,15 @@ from services.participacao_service import (
     listar_participantes
 )
 
+
 def tela_desafios():
 
     st.title("Desafios")
 
-    if st.button("Criar desafio"):
+    if st.button(
+        "Criar desafio",
+        key="btn_criar_desafio"
+    ):
 
         st.session_state.pagina = "criar_desafio"
 
@@ -26,7 +30,9 @@ def tela_desafios():
 
     if not desafios:
 
-        st.info("Nenhum desafio cadastrado")
+        st.info(
+            "Nenhum desafio cadastrado"
+        )
 
         return
 
@@ -45,54 +51,73 @@ def tela_desafios():
             )
 
             st.write(
-                f"Máximo participantes: {desafio['max_participantes']}"
-            )
-
-            st.write(
-                f"Fecha em: {desafio['data_fechamento']}"
-            )
-
-            st.write(
-                f"Participantes máximos: "
+                f"Máximo participantes: "
                 f"{desafio['max_participantes']}"
             )
 
-        st.write(
-                f"Fechamento: "
+            st.write(
+                f"Fecha em: "
                 f"{desafio['data_fechamento']}"
             )
-            
+
+            st.write(
+                f"Status: "
+                f"{desafio['status']}"
+            )
+
+            participantes = listar_participantes(
+                desafio["id"]
+            )
+
+            if participantes:
+
+                st.write(
+                    "Participantes:"
+                )
+
+                for p in participantes:
+
+                    st.write(
+                        f"- {p['usuarios']['nome']}"
+                    )
+
+            if st.button(
+                "Participar",
+                key=f"participar_{desafio['id']}"
+            ):
+
+                sucesso = participar_desafio(
+                    desafio["id"],
+                    usuario["id"]
+                )
+
+                if sucesso:
+
+                    st.success(
+                        "Participação registrada"
+                    )
+
+                    st.rerun()
+
+                else:
+
+                    st.warning(
+                        "Você já participa"
+                    )
+
             pode_editar = (
-                usuario["id"] == desafio["criador_id"]
-                or usuario["tipo_usuario"] in [
+
+                usuario["id"]
+                == desafio["criador_id"]
+
+                or
+
+                usuario["tipo_usuario"]
+                in [
                     "professor",
                     "admin"
                 ]
             )
-
-        if st.button(
-            "Participar",
-            key=f"participar_{desafio['id']}"
-            ):
-
-        sucesso = participar_desafio(
-            desafio["id"],
-            usuario["id"]
-            )
-
-        if sucesso:
-
-            st.success(
-                "Participação registrada"
-            )
-
-        st.rerun()
-
-    else:
-
-        st.warning(
-            "Você já participa"
-        )
 
             if pode_editar:
 
