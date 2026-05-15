@@ -45,3 +45,9 @@ def mostrar_menu():
             st.session_state.pagina = "login"
 
             st.rerun()
+
+        if st.button("Desafios"):
+
+            st.session_state.pagina = "desafios"
+
+            st.rerun()
