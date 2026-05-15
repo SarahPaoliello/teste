@@ -34,12 +34,10 @@ def criar_desafio(
 
         "data_fechamento": data_fechamento.isoformat(),
 
-        # ALTERADO PARA O NOME CORRETO DA TABELA
         "criador_id": int(
             criador_id
         ),
 
-        # STATUS PADRÃO
         "status": "aberto"
     }
 
