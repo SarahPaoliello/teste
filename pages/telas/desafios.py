@@ -7,7 +7,9 @@ from services.desafio_service import (
 
 from services.participacao_service import (
     participar_desafio,
-    listar_participantes
+    listar_participantes,
+    concluir_desafio,
+    cancelar_participacao
 )
 
 
@@ -40,6 +42,10 @@ def tela_desafios():
 
     for desafio in desafios:
 
+        participantes = listar_participantes(
+            desafio["id"]
+        )
+
         with st.container(border=True):
 
             st.subheader(
@@ -65,15 +71,11 @@ def tela_desafios():
                 f"{desafio['status']}"
             )
 
-            participantes = listar_participantes(
-                desafio["id"]
-            )
+            st.divider()
 
             if participantes:
 
-                st.write(
-                    "Participantes:"
-                )
+                st.write("Participantes:")
 
                 for p in participantes:
 
@@ -81,29 +83,100 @@ def tela_desafios():
                         f"- {p['usuarios']['nome']}"
                     )
 
-            if st.button(
-                "Participar",
-                key=f"participar_{desafio['id']}"
-            ):
+            else:
 
-                sucesso = participar_desafio(
-                    desafio["id"],
-                    usuario["id"]
+                st.info(
+                    "Nenhum participante ainda"
                 )
 
-                if sucesso:
+            participando = any(
 
-                    st.success(
-                        "Participação registrada"
+                p["usuario_id"] == usuario["id"]
+
+                for p in participantes
+            )
+
+            st.divider()
+
+            # PARTICIPAR
+
+            if not participando:
+
+                if st.button(
+                    "Participar",
+                    key=f"participar_{desafio['id']}"
+                ):
+
+                    sucesso = participar_desafio(
+                        desafio["id"],
+                        usuario["id"]
                     )
+
+                    if sucesso:
+
+                        st.success(
+                            "Participação registrada"
+                        )
+
+                    else:
+
+                        st.warning(
+                            "Você já participa"
+                        )
 
                     st.rerun()
 
-                else:
+            # CANCELAR PARTICIPAÇÃO
 
-                    st.warning(
-                        "Você já participa"
-                    )
+            else:
+
+                st.success(
+                    "Você participa deste desafio"
+                )
+
+                if desafio["status"] != "concluido":
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+
+                        if st.button(
+                            "Concluir desafio",
+                            key=f"concluir_{desafio['id']}"
+                        ):
+
+                            concluir_desafio(
+                                desafio["id"],
+                                usuario["id"]
+                            )
+
+                            st.success(
+                                "Desafio concluído"
+                            )
+
+                            st.rerun()
+
+                    with col2:
+
+                        if st.button(
+                            "Cancelar participação",
+                            key=f"cancelar_{desafio['id']}"
+                        ):
+
+                            cancelar_participacao(
+                                desafio["id"],
+                                usuario["id"]
+                            )
+
+                            st.warning(
+                                "Participação cancelada"
+                            )
+
+                            st.rerun()
+
+            st.divider()
+
+            # PERMISSÃO DE EDIÇÃO
 
             pode_editar = (
 
@@ -119,16 +192,31 @@ def tela_desafios():
                 ]
             )
 
-            if pode_editar:
+            # BLOQUEAR EDIÇÃO SE CONCLUÍDO
+
+            if (
+                pode_editar
+                and desafio["status"] != "concluido"
+            ):
 
                 col1, col2 = st.columns(2)
 
                 with col1:
 
-                    st.button(
+                    if st.button(
                         "Editar",
                         key=f"editar_{desafio['id']}"
-                    )
+                    ):
+
+                        st.session_state.desafio_editar = (
+                            desafio["id"]
+                        )
+
+                        st.session_state.pagina = (
+                            "editar_desafio"
+                        )
+
+                        st.rerun()
 
                 with col2:
 
