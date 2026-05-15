@@ -1,10 +1,9 @@
 from database.conexao import supabase
-from datetime import datetime
 
 
 def listar_desafios():
 
-    return (
+    resposta = (
         supabase
         .table("desafios")
         .select("*")
@@ -12,45 +11,31 @@ def listar_desafios():
         .execute()
     )
 
-
-def criar_desafio(titulo, descricao, vagas, data_fechamento, usuario_id):
-
-    return (
-        supabase
-        .table("desafios")
-        .insert({
-            "titulo": titulo,
-            "descricao": descricao,
-            "max_participantes": vagas,
-            "data_fechamento": data_fechamento,
-            "criador_id": usuario_id,
-            "status": "aberto"
-        })
-        .execute()
-    )
+    return resposta.data
 
 
-def editar_desafio(id_desafio, titulo, descricao):
+def criar_desafio(
+    titulo,
+    descricao,
+    max_participantes,
+    data_fechamento,
+    criado_por
+):
 
-    return (
-        supabase
-        .table("desafios")
-        .update({
-            "titulo": titulo,
-            "descricao": descricao,
-            "editado_em": str(datetime.now())
-        })
-        .eq("id", int(id_desafio))
-        .execute()
-    )
+    supabase.table("desafios").insert({
+
+        "titulo": titulo,
+        "descricao": descricao,
+        "max_participantes": max_participantes,
+        "data_fechamento": str(data_fechamento),
+        "criado_por": criado_por
+
+    }).execute()
 
 
 def deletar_desafio(id_desafio):
 
-    return (
-        supabase
-        .table("desafios")
-        .delete()
-        .eq("id", int(id_desafio))
+    supabase.table("desafios")\
+        .delete()\
+        .eq("id", id_desafio)\
         .execute()
-    )
