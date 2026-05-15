@@ -70,6 +70,30 @@ def tela_desafios():
                 ]
             )
 
+        if st.button(
+            "Participar",
+            key=f"participar_{desafio['id']}"
+            ):
+
+        sucesso = participar_desafio(
+            desafio["id"],
+            usuario["id"]
+            )
+
+        if sucesso:
+
+            st.success(
+                "Participação registrada"
+            )
+
+        st.rerun()
+
+    else:
+
+        st.warning(
+            "Você já participa"
+        )
+
             if pode_editar:
 
                 col1, col2 = st.columns(2)
