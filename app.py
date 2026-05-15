@@ -4,9 +4,12 @@ from utils.session import iniciar_session
 
 from components.navbar import mostrar_menu
 
-from pages.login import tela_login
-from pages.cadastro import tela_cadastro
-from pages.home import tela_home
+from pages.telas.login import tela_login
+from pages.telas.cadastro import tela_cadastro
+from pages.telas.home import tela_home
+
+from pages.telas.desafios import tela_desafios
+from pages.telas.criar_desafio import tela_criar_desafio
 
 st.set_page_config(
     page_title="Challenge System",
