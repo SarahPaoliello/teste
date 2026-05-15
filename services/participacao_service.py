@@ -48,3 +48,17 @@ def listar_participantes(
     )
 
     return resposta.data
+def cancelar_participacao(
+    desafio_id,
+    usuario_id
+):
+
+    supabase.table(
+        "participantes_desafio"
+    ).delete().eq(
+        "desafio_id",
+        desafio_id
+    ).eq(
+        "usuario_id",
+        usuario_id
+    ).execute()
