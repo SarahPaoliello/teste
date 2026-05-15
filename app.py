@@ -41,3 +41,11 @@ elif pagina == "home":
         st.rerun()
 
     tela_home()
+
+elif pagina == "desafios":
+
+    tela_desafios()
+
+elif pagina == "criar_desafio":
+
+    tela_criar_desafio()
