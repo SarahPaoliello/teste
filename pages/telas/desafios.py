@@ -49,7 +49,7 @@ def tela_desafios():
             )
 
             pode_editar = (
-                usuario["id"] == desafio["criado_por"]
+                usuario["id"] == desafio["criador_id"]
                 or usuario["tipo_usuario"] in [
                     "professor",
                     "admin"
