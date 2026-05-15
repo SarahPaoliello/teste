@@ -5,6 +5,10 @@ from services.desafio_service import (
     deletar_desafio
 )
 
+from services.participacao_service import (
+    participar_desafio,
+    listar_participantes
+)
 
 def tela_desafios():
 
@@ -48,6 +52,16 @@ def tela_desafios():
                 f"Fecha em: {desafio['data_fechamento']}"
             )
 
+            st.write(
+                f"Participantes máximos: "
+                f"{desafio['max_participantes']}"
+            )
+
+        st.write(
+                f"Fechamento: "
+                f"{desafio['data_fechamento']}"
+            )
+            
             pode_editar = (
                 usuario["id"] == desafio["criador_id"]
                 or usuario["tipo_usuario"] in [
